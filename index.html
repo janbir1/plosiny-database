@@ -12,39 +12,44 @@
         .ghost { opacity: 0.3; background: #d3d2b5 !important; border: 2px dashed #6366f1; }
         .drag-handle { cursor: grab; transition: all 0.2s ease; border-left-width: 6px; touch-action: none; }
         .drag-handle:active { cursor: grabbing; scale: 0.98; }
-        #authOverlay { backdrop-filter: blur(12px); z-index: 100; transition: all 0.5s ease; }
+        #authOverlay { backdrop-filter: blur(12px); z-index: 100; transition: all 0.4s ease; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-2 md:p-10 select-none">
 
     <div id="authOverlay" class="fixed inset-0 bg-slate-900/95 flex items-center justify-center p-4">
-        <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl max-w-sm w-full text-center">
-            <h2 class="text-2xl font-black mb-6 uppercase tracking-tight">Vstup do systému</h2>
-            <input type="password" id="pinInput" placeholder="PIN" 
-                class="bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 w-full text-center text-2xl tracking-[1em] focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-4 text-white font-bold">
-            <button onclick="checkPin()" class="bg-emerald-600 hover:bg-emerald-500 text-white w-full py-4 rounded-lg font-bold transition active:scale-95 shadow-lg">
-                POTVRDIT
-            </button>
-            <p id="errorMsg" class="text-red-500 text-sm mt-4 opacity-0 transition-opacity">Nesprávný PIN!</p>
+        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl max-w-sm w-full text-center">
+            <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-black uppercase tracking-tight text-white mb-2">Vstup do systému</h2>
+            <p class="text-slate-400 text-sm mb-6">Zadejte přístupový PIN</p>
+            
+            <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" placeholder="••••" 
+                class="bg-slate-900 border border-slate-600 rounded-2xl px-4 py-4 w-full text-center text-3xl tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2 text-white font-bold transition-all">
+            
+            <p id="errorMsg" class="text-red-500 text-sm h-5 opacity-0 transition-opacity">Nesprávný PIN!</p>
         </div>
     </div>
 
     <main id="dashboardContent" class="hidden opacity-0 transition-opacity duration-700">
-        <header class="max-w-6xl mx-auto mb-6 md:mb-10 text-center md:text-left">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+        <header class="max-w-6xl mx-auto mb-6 md:mb-10">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 text-center md:text-left">
                 <div>
-                    <h1 class="text-3xl font-black tracking-tight uppercase text-white">Plošiny <span class="text-emerald-500">Live</span></h1>
-                    <p class="text-slate-400 text-sm">Synchronizováno s cloudem</p>
+                    <h1 class="text-3xl font-black tracking-tight uppercase text-white">Plošiny <span class="text-emerald-500 text-sm align-top">Live</span></h1>
+                    <p class="text-slate-400 text-sm">Cloudová správa zakázek</p>
                 </div>
-                <button onclick="resetBoard()" class="bg-red-900/20 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition border border-red-500/30">
-                    VYMAZAT VŠE
+                <button onclick="resetBoard()" class="bg-red-900/20 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition border border-red-500/30 uppercase tracking-widest">
+                    Vymazat vše
                 </button>
             </div>
 
-            <div class="bg-slate-800 p-3 md:p-4 rounded-xl border border-slate-700 flex gap-2 max-w-2xl mx-auto shadow-2xl">
+            <div class="bg-slate-800 p-3 md:p-4 rounded-2xl border border-slate-700 flex gap-2 max-w-2xl mx-auto shadow-2xl">
                 <input type="text" id="taskInput" placeholder="Název nové zakázky..." 
-                    class="bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-emerald-500 transition font-semibold text-white">
-                <button onclick="addTask()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg font-bold transition shadow-lg active:scale-95">
+                    class="bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-emerald-500 transition font-semibold text-white">
+                <button onclick="addTask()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
                     PŘIDAT
                 </button>
             </div>
@@ -82,7 +87,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const HASHED_PIN = "81dc9bdb52d04dc20036dbd8313ed055"; 
+        // --- ZABEZPEČENÍ ---
+        // PIN už není vidět v textu. Hash pro je níže:
+        const HASHED_PIN = "4a7d1ed414474e4033ac29ccb8653d9b"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyB61Eid8mJ-0MXmA2G4psNe6QkhVZo92eQ",
@@ -99,11 +106,18 @@
         const db = getDatabase(app);
         const boardRef = ref(db, 'board_state');
 
-        // EXPORTY PRO TLAČÍTKA
-        window.checkPin = function() {
-            const input = document.getElementById('pinInput').value;
-            const hashedInput = CryptoJS.MD5(input).toString();
+        const pinInput = document.getElementById('pinInput');
+        const textColors = { 'border-blue-500': 'text-blue-400', 'border-yellow-500': 'text-yellow-400', 'border-purple-500': 'text-purple-400', 'border-emerald-500': 'text-emerald-400' };
 
+        // Sleduje délku pro automatický vstup (předpokládá 4 místa)
+        pinInput.addEventListener('input', (e) => {
+            if (e.target.value.length === 4) {
+                checkPin();
+            }
+        });
+
+        window.checkPin = function() {
+            const hashedInput = CryptoJS.MD5(pinInput.value).toString();
             if (hashedInput === HASHED_PIN) {
                 const overlay = document.getElementById('authOverlay');
                 const content = document.getElementById('dashboardContent');
@@ -112,59 +126,49 @@
                     overlay.classList.add('hidden');
                     content.classList.remove('hidden');
                     setTimeout(() => content.style.opacity = '1', 50);
-                }, 500);
+                }, 400);
                 initFirebase();
             } else {
                 const err = document.getElementById('errorMsg');
                 err.classList.remove('opacity-0');
-                setTimeout(() => err.classList.add('opacity-0'), 2000);
+                pinInput.classList.add('border-red-500', 'animate-pulse');
+                setTimeout(() => {
+                    err.classList.add('opacity-0');
+                    pinInput.classList.remove('border-red-500', 'animate-pulse');
+                    pinInput.value = "";
+                }, 1000);
             }
         };
 
         function initFirebase() {
-    console.log("Připojování k Firebase...");
-    onValue(boardRef, (snapshot) => {
-        const data = snapshot.val();
-        console.log("Data přijata:", data);
-        if (data) {
-            Object.keys(data).forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    // Použijeme odlišný přístup pro obnovu, aby se "chytil" prohlížeč
-                    el.innerHTML = ""; 
-                    el.innerHTML = data[id];
+            onValue(boardRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerHTML = data[id];
+                    });
                 }
             });
         }
-    }, (error) => {
-        console.error("FIREBASE CHYBA:", error.message);
-        alert("Chyba databáze: " + error.message);
-    });
-}
 
-window.saveState = function() {
-    const state = {};
-    document.querySelectorAll('.sortable-list').forEach(l => {
-        state[l.id] = l.innerHTML;
-    });
-    
-    console.log("Odesílám data...");
-    set(boardRef, state)
-        .then(() => console.log("Uloženo v cloudu"))
-        .catch(err => console.error("SELHÁNÍ UKLÁDÁNÍ:", err));
-}
+        window.saveState = function() {
+            const state = {};
+            document.querySelectorAll('.sortable-list').forEach(l => {
+                state[l.id] = l.innerHTML;
+            });
+            set(boardRef, state).catch(err => console.error(err));
+        }
 
         window.addTask = function() {
             const input = document.getElementById('taskInput');
             const title = input.value.trim();
             if (!title) return;
-
             const now = new Date();
             const time = `${now.getDate()}.${now.getMonth() + 1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-            
             const col1 = document.getElementById('col-1');
             const task = document.createElement('div');
-            task.className = "bg-slate-700 p-4 rounded-lg shadow-md drag-handle border-l-[6px] border-blue-500 transition-all group relative active:shadow-inner mb-3";
+            task.className = "bg-slate-700 p-4 rounded-xl shadow-md drag-handle border-l-[6px] border-blue-500 transition-all group relative mb-3";
             task.innerHTML = `
                 <button onclick="this.parentElement.remove(); window.dispatchEvent(new Event('saveRequested'));" class="absolute top-2 right-2 text-slate-500 hover:text-red-400 p-2 md:opacity-0 group-hover:opacity-100 transition">✕</button>
                 <div class="font-bold text-slate-100 text-lg mb-1 pr-6">${title}</div>
@@ -177,22 +181,17 @@ window.saveState = function() {
         }
 
         window.resetBoard = function() {
-            if(confirm("POZOR: Smazat všechna data z cloudu?")) {
+            if(confirm("Smazat všechna data z cloudu?")) {
                 set(boardRef, {}).then(() => location.reload());
             }
         }
-
-        // Pomocná funkce pro barvy
-        const textColors = { 'border-blue-500': 'text-blue-400', 'border-yellow-500': 'text-yellow-400', 'border-purple-500': 'text-purple-400', 'border-emerald-500': 'text-emerald-400' };
 
         function updateTaskStatus(taskElement, columnElement) {
             const newColor = columnElement.getAttribute('data-color');
             const statusName = columnElement.getAttribute('data-name');
             const statusEl = taskElement.querySelector('.status-log');
-            
             taskElement.classList.remove('border-blue-500', 'border-yellow-500', 'border-purple-500', 'border-emerald-500');
             taskElement.classList.add(newColor);
-
             if (statusEl) {
                 const now = new Date();
                 const time = `${now.getDate()}.${now.getMonth() + 1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -202,7 +201,6 @@ window.saveState = function() {
             }
         }
 
-        // INICIALIZACE SORTABLE
         document.querySelectorAll('.sortable-list').forEach(list => {
             new Sortable(list, {
                 group: 'tasks',
@@ -218,7 +216,6 @@ window.saveState = function() {
         });
 
         window.addEventListener('saveRequested', saveState);
-        document.getElementById('pinInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkPin(); });
         document.getElementById('taskInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
     </script>
 </body>
