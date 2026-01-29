@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Plošiny Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
+    <style>
+        .ghost { opacity: 0.3; background: #d3d2b5 !important; border: 2px dashed #6366f1; }
+        .drag-handle { cursor: grab; transition: all 0.2s ease; border-left-width: 6px; touch-action: none; }
+        .drag-handle:active { cursor: grabbing; scale: 0.98; }
+        .sortable-fallback { opacity: 1 !important; }
+        #authOverlay { backdrop-filter: blur(8px); z-index: 100; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-2 md:p-10 select-none">
+
+    <div id="authOverlay" class="fixed inset-0 bg-slate-900/90 flex items-center justify-center p-4">
+        <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl max-w-sm w-full text-center">
+            <h2 class="text-2xl font-black mb-6 uppercase tracking-tight">Zabezpečený přístup</h2>
+            <input type="password" id="pinInput" placeholder="PIN" 
+                class="bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 w-full text-center text-2xl tracking-[1em] focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-4 transition text-white font-bold">
+            <button onclick="checkPin()" class="bg-emerald-600 hover:bg-emerald-500 text-white w-full py-3 rounded-lg font-bold transition active:scale-95">
+                VSTOUPIT
+            </button>
+            <p id="errorMsg" class="text-red-500 text-sm mt-4 hidden">Nesprávný kód!</p>
+        </div>
+    </div>
+
+    <main id="dashboardContent" class="opacity-0 transition-opacity duration-500 pointer-events-none">
+        <header class="max-w-6xl mx-auto mb-6 md:mb-10">
+            <div class="flex justify-between items-center gap-4 mb-6">
+                <div>
+                     <h1 class="text-2xl md:text-3xl font-black tracking-tight uppercase">PLATFORM INVENTORY</h1>
+                <p class="text-slate-400 text-xs md:text-sm">Cloudová správa objednávek plošin (Sync. version)</p>
+                </div>
+                <button onclick="resetBoard()" class="bg-orange-600/10 hover:bg-orange-600 text-orange-600 hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition border border-orange-600/20">
+                    Smazat vše
+                </button>
+            </div>
+
+            <div class="bg-slate-800 p-3 md:p-4 rounded-xl border border-slate-700 flex gap-2 max-w-2xl mx-auto shadow-2xl text-slate-900">
+                <input type="text" id="taskInput" placeholder="Název zakázky..." 
+                    class="bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-emerald-800 transition text-white font-semibold">
+            <button onclick="addTask()" class="bg-emerald-800 hover:bg-emerald-600 text-white px-5 md:px-8 py-3 rounded-lg font-bold transition shadow-lg active:scale-95">
+					PŘIDAT
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
+            <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50">
+                <h2 class="text-blue-400 font-bold uppercase tracking-widest text-[10px] mb-4 flex items-center bg-blue-500/10 w-fit px-2 py-1 rounded">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span> Objednat
+                </h2>
+                <div id="col-1" data-name="Objednat" data-color="border-blue-500" class="sortable-list space-y-3 min-h-[150px] md:min-h-[400px]"></div>
+            </div>
+
+            <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50">
+                <h2 class="text-yellow-400 font-bold uppercase tracking-widest text-[10px] mb-4 flex items-center bg-yellow-500/10 w-fit px-2 py-1 rounded">
+                    <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span> Domluveno
+                </h2>
+                <div id="col-2" data-name="Domluveno" data-color="border-yellow-500" class="sortable-list space-y-3 min-h-[150px] md:min-h-[400px]"></div>
+            </div>
+
+            <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50">
+                <h2 class="text-purple-400 font-bold uppercase tracking-widest text-[10px] mb-4 flex items-center bg-purple-500/10 w-fit px-2 py-1 rounded">
+                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span> Odvoláno
+                </h2>
+                <div id="col-3" data-name="Odvoláno" data-color="border-purple-500" class="sortable-list space-y-3 min-h-[150px] md:min-h-[400px]"></div>
+            </div>
+
+            <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50">
+                <h2 class="text-emerald-400 font-bold uppercase tracking-widest text-[10px] mb-4 flex items-center bg-emerald-500/10 w-fit px-2 py-1 rounded">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span> Odvezeno
+                </h2>
+                <div id="col-4" data-name="Odvezeno" data-color="border-emerald-500" class="sortable-list space-y-3 min-h-[150px] md:min-h-[400px]"></div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // !!! TADY NASTAVTE SVŮJ PIN !!!
+        const MASTER_PIN = "0000";
+
+        // !!! SEM VLOŽTE SVŮJ FIREBASE CONFIG !!!
+        const firebaseConfig = {
+            apiKey: "AIzaSyB61Eid8mJ-0MXmA2G4psNe6QkhVZo92eQ",
+            authDomain: "plosiny-database.firebaseapp.com",
+			projectId: "plosiny-database",
+			storageBucket: "plosiny-database.firebasestorage.app",
+			messagingSenderId: "118729770542",
+			appId: "1:118729770542:web:74e8d631060f979c0981bf",
+			measurementId: "G-QQLGLQ3BJE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const boardRef = ref(db, 'board_state');
+
+        const colorClasses = ['border-blue-500', 'border-yellow-500', 'border-purple-500', 'border-emerald-500'];
+        const textColors = {
+            'border-blue-500': 'text-blue-400',
+            'border-yellow-500': 'text-yellow-400',
+            'border-purple-500': 'text-purple-400',
+            'border-emerald-500': 'text-emerald-400'
+        };
+
+        // --- AUTH LOGIKA ---
+        window.checkPin = function() {
+            const input = document.getElementById('pinInput').value;
+            if (input === MASTER_PIN) {
+                document.getElementById('authOverlay').classList.add('hidden');
+                document.getElementById('dashboardContent').classList.remove('opacity-0', 'pointer-events-none');
+                initFirebaseListener();
+            } else {
+                const err = document.getElementById('errorMsg');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 2000);
+            }
+        };
+
+        // --- FIREBASE LOGIKA ---
+        function initFirebaseListener() {
+            onValue(boardRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerHTML = data[id];
+                    });
+                }
+            });
+        }
+
+        window.saveState = function() {
+            const state = {};
+            document.querySelectorAll('.sortable-list').forEach(l => {
+                state[l.id] = l.innerHTML;
+            });
+            set(boardRef, state);
+        }
+
+        window.addTask = function() {
+            const input = document.getElementById('taskInput');
+            const title = input.value.trim();
+            if (!title) return;
+
+            const now = new Date();
+            const time = `${now.getDate()}.${now.getMonth() + 1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            const col1 = document.getElementById('col-1');
+            const task = document.createElement('div');
+            task.className = "bg-slate-700 p-4 rounded-lg shadow-md drag-handle border-l-[6px] border-blue-500 transition-all group relative active:shadow-inner";
+            task.innerHTML = `
+                <button onclick="this.parentElement.remove(); window.dispatchEvent(new Event('saveRequested'));" class="absolute top-2 right-2 text-slate-500 hover:text-red-400 p-2 md:opacity-0 group-hover:opacity-100 transition">✕</button>
+                <div class="font-bold text-slate-100 text-lg mb-1 pr-6">${title}</div>
+                <div class="text-[10px] text-slate-400 uppercase tracking-wider">Vytvořeno: ${time}</div>
+                <div class="status-log text-[10px] text-blue-400 font-extrabold uppercase tracking-wider mt-1">Stav: Objednat</div>
+            `;
+            col1.appendChild(task);
+            input.value = "";
+            saveState();
+        }
+
+        window.resetBoard = function() {
+            if(confirm("Opravdu smazat všechna data z cloudu?")) {
+                set(boardRef, null).then(() => location.reload());
+            }
+        }
+
+        function updateTaskStatus(taskElement, columnElement) {
+            const newBorderColor = columnElement.getAttribute('data-color');
+            const statusName = columnElement.getAttribute('data-name');
+            const statusEl = taskElement.querySelector('.status-log');
+            
+            taskElement.classList.remove(...colorClasses);
+            taskElement.classList.add(newBorderColor);
+
+            if (statusEl) {
+                const now = new Date();
+                const time = `${now.getDate()}.${now.getMonth() + 1}. ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+                Object.values(textColors).forEach(c => statusEl.classList.remove(c));
+                statusEl.classList.add(textColors[newBorderColor]);
+                statusEl.textContent = `Stav: ${statusName} (${time})`;
+            }
+        }
+
+        // --- SORTABLE ---
+        document.querySelectorAll('.sortable-list').forEach(list => {
+            new Sortable(list, {
+                group: 'tasks',
+                animation: 250,
+                ghostClass: 'ghost',
+                delay: 50,
+                delayOnTouchOnly: true,
+                onEnd: (evt) => {
+                    if (evt.from !== evt.to) updateTaskStatus(evt.item, evt.to);
+                    saveState();
+                }
+            });
+        });
+
+        window.addEventListener('saveRequested', saveState);
+        document.getElementById('pinInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkPin(); });
+        document.getElementById('taskInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTask(); });
+    </script>
+</body>
+</html>
