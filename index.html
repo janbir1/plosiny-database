@@ -87,6 +87,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyB61Eid8mJ-0MXmA2G4psNe6QkhVZo92eQ",
             authDomain: "plosiny-database.firebaseapp.com",
+			databaseURL: "https://plosiny-database-default-rtdb.europe-west1.firebasedatabase.app",
 			projectId: "plosiny-database",
 			storageBucket: "plosiny-database.firebasestorage.app",
 			messagingSenderId: "118729770542",
@@ -121,26 +122,37 @@
         };
 
         function initFirebase() {
-            onValue(boardRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    Object.keys(data).forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.innerHTML = data[id];
-                    });
+    console.log("Připojování k Firebase...");
+    onValue(boardRef, (snapshot) => {
+        const data = snapshot.val();
+        console.log("Data přijata:", data);
+        if (data) {
+            Object.keys(data).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    // Použijeme odlišný přístup pro obnovu, aby se "chytil" prohlížeč
+                    el.innerHTML = ""; 
+                    el.innerHTML = data[id];
                 }
-            }, (error) => {
-                console.error("Chyba při načítání:", error);
             });
         }
+    }, (error) => {
+        console.error("FIREBASE CHYBA:", error.message);
+        alert("Chyba databáze: " + error.message);
+    });
+}
 
-        window.saveState = function() {
-            const state = {};
-            document.querySelectorAll('.sortable-list').forEach(l => {
-                state[l.id] = l.innerHTML;
-            });
-            set(boardRef, state).catch(err => console.error("Chyba ukládání:", err));
-        }
+window.saveState = function() {
+    const state = {};
+    document.querySelectorAll('.sortable-list').forEach(l => {
+        state[l.id] = l.innerHTML;
+    });
+    
+    console.log("Odesílám data...");
+    set(boardRef, state)
+        .then(() => console.log("Uloženo v cloudu"))
+        .catch(err => console.error("SELHÁNÍ UKLÁDÁNÍ:", err));
+}
 
         window.addTask = function() {
             const input = document.getElementById('taskInput');
