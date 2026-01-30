@@ -149,7 +149,7 @@
 
         function attachEventsToCards(column) {
             column.querySelectorAll('.task-card').forEach(card => {
-                card.onclick = function() { handleDoubleClick(this); }; // Pro PC
+                card.ondblclick = function() { handleDoubleClick(this); }; // Pro PC
                 card.ontouchstart = function(e) { handleTouch(e, this); }; // Pro mobil
             });
         }
@@ -181,8 +181,9 @@
             const task = document.createElement('div');
             task.className = "task-card bg-slate-700 p-3.5 rounded-xl shadow-md drag-handle border-l-[6px] border-blue-500 transition-all group relative mb-3";
             
-            task.onclick = function() { handleDoubleClick(this); };
-            task.ontouchstart = function(e) { handleTouch(e, this); };
+            // OPRAVA: PC čeká na double, mobil na handleTouch
+			task.ondblclick = function() { handleDoubleClick(this); };
+			task.ontouchstart = function(e) { handleTouch(e, this); };
 
             task.innerHTML = `
                 <button onclick="this.parentElement.remove(); saveState();" class="absolute top-2 right-2 text-slate-500 hover:text-red-400 p-2 md:opacity-0 group-hover:opacity-100 transition">✕</button>
@@ -232,4 +233,3 @@
     </script>
 </body>
 </html>
-
